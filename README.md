@@ -21,7 +21,7 @@ locks and the reliability of offline-first cloud syncing.
   - Automatic Cloud Sync - collection stays backed up to the cloud automatically 
 ---
 
-## Tech Stack
+## Technicals
 - **languages** xml, kotlin, java, sql
 - **Database:** SQLite, Room, CloudDatabase(Google Firebase)
 - **MVVM (Model-View-View-Model) Pattern**
