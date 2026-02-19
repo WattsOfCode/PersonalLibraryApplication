@@ -1,0 +1,49 @@
+<resources>
+    <string name="app_name">BookNookV2</string>
+
+    <!-- Buttons -->
+    <string name="btn_add">Add</string>
+    <string name="btn_back">Back</string>
+    <string name="btn_edit">Edit</string>
+    <string name="btn_my_library">My Library</string>
+    <string name="btn_search">Search</string>
+    <string name="btn_remove">Remove</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_status">Status</string>
+    <!--later implementation items-->
+    <string name="btn_settings">Settings</string>
+
+    <!-- String content -->
+    <string name="img_content">image</string>
+    <string name="img_title_description">Book Nook for title image</string>
+    <string name="txt_hint_general">general hint</string>
+    <string name="txt_tag_genre">Genre</string>
+    <string name="txt_quick_stats">Quick Stats</string>
+
+    <!-- DB String content -->
+    <string name="db_string_title"> </string>
+    <string name="db_string_author">by %s</string>
+    <string name="db_string_author_"> </string>
+    <string name="db_int_isbn"> </string>
+    <string name="db_string_publisher"> </string>
+    <string name="db_int_year"> </string>
+    <string name="db_int_pages">   \u2022 %d Pages</string>
+    <string name="db_int_pages_"> </string>
+    <string name="db_string_summary"> </string>
+    <string name="db_string_note"> </string>
+    <string name="db_string_status"> </string>
+    <string name="db_genre"> </string>
+    <string name="db_count_books">number</string>
+    <string name="db_count_read_books"> number</string>
+    <string name="db_wishlist_count">number</string>
+
+    <!-- titling -->
+    <string name="txt_title">Book Nook</string>
+    <string name="txt_title_add">Add Book</string>
+    <string name="txt_title_edit">Edit Book</string>
+    <string name="txt_title_library">My Library</string>
+
+    <!--later additions-->
+    <string name="txt_delete_book"> Delete </string>
+    <string name="txt_img_select">Select a image</string>
+</resources>
