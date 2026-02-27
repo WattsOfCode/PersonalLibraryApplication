@@ -68,10 +68,11 @@
     <Button
         android:id="@+id/btn_my_library"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="My Library"
+        android:layout_height="60dp"
+        android:text="Open My Library"
+        android:textSize="18sp"
         android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/btn_add_book"
+        app:layout_constraintBottom_toTopOf="@+id/btn_add_shelf"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
@@ -79,23 +80,40 @@
         android:id="@+id/btn_add_book"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Add Manual"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="16dp"
+        android:text="Manual"
+        android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btn_add_shelf"
+        app:layout_constraintHorizontal_weight="1"
+        android:layout_marginEnd="4dp"
+        android:layout_marginBottom="8dp"/>
+
+    <Button
+        android:id="@+id/btn_add_shelf"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Shelf"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/btn_add_book"
         app:layout_constraintEnd_toStartOf="@+id/btn_scan_barcode"
-        app:layout_constraintHorizontal_chainStyle="packed"/>
+        app:layout_constraintHorizontal_weight="1"
+        android:layout_marginEnd="4dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginBottom="8dp"/>
 
     <Button
         android:id="@+id/btn_scan_barcode"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Scan Barcode"
-        android:layout_marginStart="8dp"
-        android:layout_marginBottom="16dp"
+        android:text="Scan"
+        android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/btn_add_book"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintStart_toEndOf="@+id/btn_add_shelf"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_weight="1"
+        android:layout_marginStart="4dp"
+        android:layout_marginBottom="8dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

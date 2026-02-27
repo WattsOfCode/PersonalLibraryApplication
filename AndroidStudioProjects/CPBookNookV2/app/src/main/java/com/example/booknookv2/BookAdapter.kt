@@ -9,26 +9,24 @@ import coil.load
 
 class BookAdapter(
     private var books: List<Book>,
-    private val onItemClicked: (Book) -> Unit
+    private val onItemClicked: (Book) -> Unit // This name must be used below
 ) : RecyclerView.Adapter<BookAdapter.BookViewHolder>() {
 
-    inner class BookViewHolder(private val binding: ItemBookBinding) :
+    inner class BookViewHolder(val binding: ItemBookBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(book: Book) {
-
+            // Use the names that exist in your XML (textBookTitle, etc.)
             binding.textBookTitle.text = book.title
             binding.textBookAuthor.text = book.author ?: "Unknown Author"
             binding.textBookGenre.text = book.tagsGenre
 
-            // Handle page count safely
             binding.textBookPages.text = if (book.pageCount != null && book.pageCount > 0) {
                 "• ${book.pageCount} pages"
             } else {
                 ""
             }
 
-            // Coil handles the image source (Local Path or Web URL) automatically!
             val imageSource = book.coverImagePath ?: book.imageUrl
             binding.imgBookCover.load(imageSource) {
                 placeholder(R.drawable.ic_book_placeholder)
@@ -36,8 +34,9 @@ class BookAdapter(
                 crossfade(true)
             }
 
-            // Loan Status Badge
             binding.textLoanStatus.isVisible = book.isLoaned
+
+            // This connects the click to the listener passed in the constructor
             binding.root.setOnClickListener {
                 onItemClicked(book)
             }
@@ -52,7 +51,9 @@ class BookAdapter(
         )
         return BookViewHolder(binding)
     }
+
     override fun onBindViewHolder(holder: BookViewHolder, position: Int) {
+        // Just call the bind function we wrote above!
         holder.bind(books[position])
     }
 

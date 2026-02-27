@@ -16,11 +16,26 @@ interface BookDao {
     @Query("SELECT * FROM books WHERE ownerId = :userId AND isLoaned = 1")
     fun getLoanedBooks(userId: Int): LiveData<List<Book>>
 
-    @Query("SELECT * FROM books WHERE ownerId = :userId AND (title LIKE '%' || :query || '%' OR author LIKE '%' || :query || '%')")
+    @Query("""
+    SELECT books.* FROM books 
+    LEFT JOIN bookcases ON books.bookcaseId = bookcases.id 
+    WHERE books.ownerId = :userId 
+    AND (
+        books.title LIKE :query OR 
+        books.author LIKE :query OR 
+        books.isbn LIKE :query OR 
+        bookcases.shelfName LIKE :query
+    )
+""")
     fun searchUserLibrary(userId: Int, query: String): Flow<List<Book>>
 
+    @Query("SELECT * FROM books WHERE bookcaseId = :shelfId")
+    fun getBooksByBookcase(shelfId: Int): Flow<List<Book>>
+
+
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertBook(book: Book)
+    suspend fun insertBook(book: Book): Long
 
     @Update
     suspend fun updateBook(book: Book)

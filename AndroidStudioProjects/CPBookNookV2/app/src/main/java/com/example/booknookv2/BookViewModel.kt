@@ -9,6 +9,7 @@ import okhttp3.Dispatcher
 
 class BookViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: BookRepository
+    val statusMessage = MutableLiveData<String>()
 
     init {
         val db = AppDatabase.getDatabase(application)
@@ -25,6 +26,39 @@ class BookViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun searchBooks(userId: Int, query: String): LiveData<List<Book>> { return repository.searchUserLibrary(userId, "%$query%").asLiveData() }
+    fun searchBooks(userId: Int, query: String): LiveData<List<Book>> {
+        return repository.searchUserLibrary(userId, "%$query%").asLiveData()
+    }
+    fun scanAndSaveBook(isbn: String, userId: Int) {
 
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val webBook = repository.fetchBookFromWeb(isbn, userId)
+
+                if (webBook != null) {
+                    repository.addBook(webBook)
+                    launch(Dispatchers.Main) {
+                        statusMessage.postValue("Book added successfully")
+                    }
+                } else {
+                    launch(Dispatchers.Main) {
+                        statusMessage.postValue("Book not found")
+                    }
+                }
+
+            }catch (e: Exception) {
+                launch(Dispatchers.Main) {
+                    statusMessage.postValue("Error: ${e.message}")
+                }
+            }
+        }
+    }
+    fun deleteBook(book: Book) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.deleteBook(book)
+            launch(Dispatchers.Main) {
+                statusMessage.postValue("Book deleted successfully")
+            }
+        }
+    }
 }

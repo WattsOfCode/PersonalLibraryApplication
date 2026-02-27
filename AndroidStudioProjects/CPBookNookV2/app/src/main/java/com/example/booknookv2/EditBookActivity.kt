@@ -17,11 +17,13 @@ import java.net.URL
 class EditBookActivity : AppCompatActivity() {
     private var allBookcases: List<Bookcase> = emptyList()
     private var selectedBookcaseId: Int? = null
-
+    private var bookId: Int = -1
     private lateinit var binding: ActivityEditBookBinding
     private lateinit var viewModel: BookViewModel
     private var selectedImageUri: Uri? = null
+    private var existingCoverPath: String? = null
 
+    private var currentIsbn: String? = null
     private val pickMedia =
         registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             if (uri != null) {
@@ -32,127 +34,140 @@ class EditBookActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         binding = ActivityEditBookBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         viewModel = ViewModelProvider(this)[BookViewModel::class.java]
 
-        val scannedIsbn = intent.getStringExtra("SCAN_RESULT_ISBN")
-        if (!scannedIsbn.isNullOrEmpty()) {
-            binding.editBookIsbn.setText(scannedIsbn)
-            fetchBookInfo(scannedIsbn)
+        SetupBookcaseSpinner()
+
+        viewModel.statusMessage.observe(this) { message ->
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+            if (message.contains("Successfully")) finish()
         }
 
-        val currentUserId = UserSession.currentUser?.id ?: -1
 
-        viewModel.getAllBookcases(currentUserId).observe(this) { shelves: List<Bookcase> ->
-            allBookcases = shelves
-            val shelfNames = shelves.map { it.shelfName }
-            val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, shelfNames)
-            binding.autoCompleteBookcase.setAdapter(adapter)
+        currentIsbn = intent.getStringExtra("SCAN_RESULT_ISBN")
+        if (!currentIsbn.isNullOrEmpty()) {
+            binding.editBookIsbn.setText(currentIsbn)
+            val currentUserId = UserSession.currentUser?.id ?: -1
+            viewModel.scanAndSaveBook(currentIsbn!!, currentUserId)
         }
 
-        binding.autoCompleteBookcase.setOnItemClickListener { _, _, position, _ ->
-            selectedBookcaseId = allBookcases[position].id
-        }
+        val existingBookId = intent.getIntExtra("BOOK_ID", -1)
+        if (existingBookId != -1) {
+            this.bookId = existingBookId
+            binding.btnDeleteBook.visibility = android.view.View.VISIBLE
 
-        binding.imgBookCoverPreview.setOnClickListener {
-            pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-        }
+            viewModel.getBooksForUser(UserSession.currentUser?.id ?: -1).observe(this) { books ->
+                val book = books.find { it.id == existingBookId }
+                book?.let {
+                    populateFields(it)
 
+                    binding.btnDeleteBook.setOnClickListener {
+                        showDeleteConfirmation(book)
+                    }
+                }
+            }
+
+        }
         binding.btnSaveBook.setOnClickListener { saveBook() }
         binding.btnBackBook.setOnClickListener { finish() }
+        binding.imgBookCoverPreview.setOnClickListener {
+            pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+    }
+    private fun showDeleteConfirmation(book: Book) {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Delete Book")
+            .setMessage("Are you sure you want to remove '${book.title}' from your library?")
+            .setPositiveButton("Delete") { _, _ ->
+                viewModel.deleteBook(book)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+    private fun populateFields(book: Book) {
+        binding.editBookTitle.setText(book.title)
+        binding.editBookAuthor.setText(book.author)
+        binding.editBookIsbn.setText(book.isbn)
+        binding.editBookSummary.setText(book.summary)
+        binding.editBookPages.setText(book.pageCount?.toString() ?: "")
+        this.existingCoverPath = book.coverImagePath ?: book.imageUrl
+        this.selectedBookcaseId = book.bookcaseId
+
+        val currentShelf = allBookcases.find { it.id == book.bookcaseId }
+        currentShelf?.let {
+            binding.autoCompleteBookcase.setText(it.shelfName, false)
+        }
+
+        if (!this.existingCoverPath.isNullOrEmpty()) {
+            binding.imgBookCoverPreview.load(this.existingCoverPath)
+        }
     }
 
     private fun saveBook() {
         val title = binding.editBookTitle.text.toString().trim()
         val author = binding.editBookAuthor.text.toString().trim()
-        val isbn = binding.editBookIsbn.text.toString().trim()
-        val genre = binding.editBookGenre.text.toString().trim()
-        val pages = binding.editBookPages.text.toString().toIntOrNull() ?: 0
-        val summary = binding.editBookSummary.text.toString().trim()
-        val isLoaned = binding.switchIsLoaned.isChecked
-
-        val status = when (binding.radioGroupStatus.checkedRadioButtonId) {
-            R.id.radio_status_wishlist -> "Wishlist"
-            R.id.radio_status_read -> "Read"
-            else -> "Owned"
-        }
+        val currentUserId = UserSession.currentUser?.id ?: return
 
         if (title.isEmpty() || author.isEmpty()) {
             Toast.makeText(this, "Please fill in required fields (*)", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val currentUserId = UserSession.currentUser?.id ?: return
-
         val book = Book(
+            id = if (bookId > 0) bookId else 0,
             ownerId = currentUserId,
             title = title,
             author = author,
-            isbn = isbn,
-            tagsGenre = genre,
-            pageCount = pages,
-            summary = summary,
+            isbn = binding.editBookIsbn.text.toString().trim(),
+            publisher = binding.editBookPublisher.text.toString().trim(),
+            publishedYear = binding.editBookYear.text.toString().toIntOrNull(),
+            tagsGenre = binding.editBookGenre.text.toString().trim(),
+            pageCount = binding.editBookPages.text.toString().toIntOrNull() ?: 0,
+            summary = binding.editBookSummary.text.toString().trim(),
             myNotes = binding.editBookNotes.text.toString(),
-            status = status,
-            isLoaned = isLoaned,
+            status = "Owned",
+            isLoaned = binding.switchIsLoaned.isChecked,
             bookcaseId = selectedBookcaseId,
-            coverImagePath = selectedImageUri?.toString()
+            coverImagePath = selectedImageUri?.toString() ?: existingCoverPath
         )
-
         viewModel.addBook(book)
         Toast.makeText(this, "Successfully saved $title", Toast.LENGTH_SHORT).show()
         finish()
     }
+    private fun SetupBookcaseSpinner() {
+        val userId = UserSession.currentUser?.id ?: -1
 
-    private fun fetchBookInfo(isbn: String) {
-        val url = "https://www.googleapis.com/books/v1/volumes?q=isbn:$isbn"
+        viewModel.getAllBookcases(userId).observe(this) { bookcases ->
+            allBookcases = bookcases
 
-        Thread {
-            try {
-                val response = java.net.URL(url).readText()
-                val jsonObject = org.json.JSONObject(response)
-                val items = jsonObject.optJSONArray("items")
+            val nameList = bookcases.map { it.shelfName }
 
-                if (items != null && items.length() > 0) {
-                    val info = items.getJSONObject(0).getJSONObject("volumeInfo")
-                    val title = info.optString("title")
-                    val authorsArray = info.optJSONArray("authors")
-                    val authors = mutableListOf<String>()
+            val adapter = ArrayAdapter<String>(
+                this@EditBookActivity,
+                android.R.layout.simple_dropdown_item_1line,
+                nameList
+            )
 
-                    if (authorsArray != null) {
-                        for (i in 0 until authorsArray.length()) {
-                            authors.add(authorsArray.getString(i))
-                        }
-                    }
+            val autoView = binding.autoCompleteBookcase as? AutoCompleteTextView
+            autoView?.setAdapter(adapter)
 
-                    val finalAuthorsString = authors.joinToString(", ")
-                    val description = info.optString("description")
-                    val pageCount = info.optInt("pageCount")
-                    val imageLinks = info.optJSONObject("imageLinks")
-                    val thumbnail = imageLinks?.optString("thumbnail")?.replace("http:", "https:")
+            autoView?.setOnItemClickListener { _, _, position, _ ->
+                val selectedShelf = allBookcases[position]
+                selectedBookcaseId = selectedShelf.id
+            }
 
-                    runOnUiThread {
-                        if (!isFinishing) {
-                            binding.editBookTitle.setText(title)
-                            binding.editBookAuthor.setText(if (finalAuthorsString.isNotEmpty()) finalAuthorsString else "Unknown Author")
-                            binding.editBookSummary.setText(description)
-                            binding.editBookPages.setText(if (pageCount > 0) pageCount.toString() else "")
+            if (bookId != -1) {
+                val currentBooks = viewModel.getBooksForUser(userId).value
+                val currentBook = currentBooks?.find { it.id == bookId }
+                val currentShelf = allBookcases.find { it.id == currentBook?.bookcaseId }
 
-                            if (!thumbnail.isNullOrEmpty()) {
-                                binding.imgBookCoverPreview.load(thumbnail)
-                                selectedImageUri = android.net.Uri.parse(thumbnail)
-                            }
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                runOnUiThread {
-                    Toast.makeText(this, "Failed to find book details", Toast.LENGTH_SHORT).show()
+                currentShelf?.let { shelf ->
+                    autoView?.setText(shelf.shelfName, false)
+                    selectedBookcaseId = shelf.id
                 }
             }
-        }.start()
+        }
     }
 }
