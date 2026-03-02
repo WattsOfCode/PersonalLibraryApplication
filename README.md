@@ -29,6 +29,11 @@ locks and the reliability of offline-first cloud syncing.
 
 ---
 
+## Application Demo
+https://youtu.be/6Q5-MfEQdis
+
+---
+
 ## Installation
 
 ```bash
