@@ -33,4 +33,15 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-}
+
+    fun loginWithoutPassword(username: String) {
+        viewModelScope.launch {
+            val user = repository.getUserByUsername(username)
+            if (user != null) {
+                UserSession.currentUser = user
+                _loginResult.postValue(true)
+            } else {
+                _loginResult.postValue(false)
+            }
+        }
+    }}
